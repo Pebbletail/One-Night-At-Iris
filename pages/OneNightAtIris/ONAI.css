@@ -1,0 +1,14 @@
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: radial-gradient(circle, rgba(2, 0, 36, 1) 0%, rgba(120, 120, 121, 1) 35%, rgba(0, 212, 255, 1) 100%);
+}
+
+#monitorHitbox {
+  display: flex;
+  justify-content: center;
+  width: 100vw;
+  height: 15vh;
+  margin-top: 83vh;
+}
