@@ -10,6 +10,19 @@ body {
   z-index: 0;
 }
 
+#deathScreen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  z-index: 99;
+  background-color: black;
+  color: red;
+  size: xx-large;
+}
+
 
 #monitorHitbox {
   display: flex;
@@ -29,13 +42,20 @@ body {
   width: 95vw;
   bottom: 1vh;
   position: absolute;
-  z-index: 99;
+  z-index: 50;
 }
 
 #powerDisplay {
   size: x-large;
-  bottom: 20vh;
-  left: 2vw;
+  bottom: 15vh;
+  left: 5vw;
+  position: absolute;
+}
+
+#hourDisplay {
+  size: x-large;
+  top: 6vh;
+  right: 5vw;
   position: absolute;
 }
 
@@ -72,14 +92,16 @@ body {
 
 #leftVent, #rightVent {
   background-color: rgb(25, 34, 34);
-  width: 15vw;
-  height: 15vw;
+  width: 10vw;
+  height: 10vw;
 }
 
 #leftButton, #rightButton {
   background-color: antiquewhite;
-  width: 4vw;
-  height: 4vw;
+  width: 3vw;
+  height: 3vw;
+  position: relative;
+  top: 4vh;
 }
 
 #lDoor, #rDoor {

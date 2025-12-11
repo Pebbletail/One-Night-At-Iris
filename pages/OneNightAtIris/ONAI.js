@@ -1,8 +1,13 @@
 body = document.getElementsByTagName("body")[0];
-let monitor_up = 0;
+let monitor_up = false;
 let curr_cam = 0;
-let last_cam = 1;
+let last_cam = 0;
 let power = 10000;
+
+let hour = 0;
+let camTime = 0;
+let officeTime = 0;
+let totalTime = 0;
 
 let ClosedLvent = false;
 let ClosedRvent = false;
@@ -14,14 +19,16 @@ function randint(min, max) {
 }
 
 
-function initialize_night([iris, rb] , leo, pickles, hazel, nigel, ruby, [taylor, limbo]) {
+function initialize_night([iris, rb] , leo, pickles, hazel, nigel, ruby, [taylor, limbo], longMod) {
   l = new Leo(leo);
   draw_monitor();
   create_monitor_tab();
   create_office();
+  display_hour(longMod);
   d = display_power();
 
   setInterval(drain_power, 130, d);
+  setInterval(update_timers, 10, longMod);
 }
 
 /*cameras*/
@@ -44,9 +51,9 @@ function create_monitor_tab() {
 }
 
 function change_monitor_state() {
-  monitor_up = Number(!Boolean(monitor_up));
+  monitor_up = !monitor_up;
 
-  if (monitor_up == 1) {
+  if (monitor_up) {
     pull_up_monitor();
   }
   else {
@@ -87,6 +94,10 @@ function draw_monitor() {
     camButton.style.top = "10vh";
     camButton.style.left = `${(70 + (i*5))}vw`;
     camButton.onclick = function(){change_camera(camButton)};
+
+    if (i==1) {
+      camButton.style.backgroundColor = "lime";
+    }
     
     
     monitor.appendChild(camButton);
@@ -109,6 +120,7 @@ function change_camera(self) {
   display_camera(curr_cam);
   self.style.backgroundColor = "lime";
   last_cam = curr_cam;
+
 }
 
 /*vents*/
@@ -172,7 +184,7 @@ function toggle_right() {
   }
 }
 
-/*power*/
+/*power and timers*/
 function display_power() {
   display = document.createElement("h1");
   display.textContent = "100%";
@@ -183,7 +195,7 @@ function display_power() {
 
 function drain_power(display) {
   if (power > 0) {
-    const usage = 0.5 + monitor_up + Number(ClosedLvent) * 1.5 + Number(ClosedRvent) * 1.5;
+    const usage = 0.5 + Number(monitor_up) + Number(ClosedLvent) * 1.5 + Number(ClosedRvent) * 1.5;
     power -= usage;
     const toDisplay = String(power);
     display.textContent = `${toDisplay.slice(0, 2)}.${toDisplay.at(2)}%`;
@@ -191,12 +203,51 @@ function drain_power(display) {
   else { kill("power out") }
 }
 
+function display_hour() {
+  display = document.createElement("h1");
+  display.textContent = "12AM";
+  display.id = "hourDisplay";
+  body.appendChild(display);
+}
+
+function increase_hour() {
+  const display = document.getElementById("hourDisplay");
+  hour += 1;
+  const toDisplay = String(hour);
+  display.textContent = `${toDisplay}AM`;
+}
+
+function update_timers(longMod) {
+  totalTime += 10;
+  if (monitor_up) {
+    camTime += 10;
+  }
+  else {
+    officeTime += 10;
+  }
+
+  if (longMod) {
+    if (totalTime % 60000 == 0) {
+      increase_hour();
+    }
+  }
+  else {
+    if (totalTime % 45000 == 0) {
+      increase_hour();
+    }
+  }
+}
+
 function kill(cause) {
   if (alive == true) {
-    console.log(`you died by ${cause}`);
+    const deathScreen = document.createElement("div");
+    deathScreen.id = "deathScreen";
+    deathScreen.textContent = `You died to ${cause}`;
+    console.log(`You died to ${cause}`);
+    body.appendChild(deathScreen);
     alive = false;
   }
-  }
+}
 
 /*characters*/
 
@@ -219,15 +270,15 @@ class Leo extends Character {
     super(ai);
     this.chance = 25;
     this.atOffice = false;
-    this.timer = NaN;
+    this.timer;
   }
 
   tryAttack() {
     if (this.check_spawn(this.chance) && this.atOffice == false) {
       this.atOffice = true;
       const leo = this.spawn_leo();
-      this.timer = setTimeout(kill, ((0.95-0.05*(this.ai/2))*1000), "Leo");
-      leo.addEventListener("click", this.clear_leo);
+      this.timer = setTimeout(kill, ((1.05-0.05*(this.ai/2))*1000), "Leo");
+      leo.addEventListener("click", this.clear_leo.bind(this));
     }
   }
 
@@ -242,8 +293,7 @@ class Leo extends Character {
     return containLeo;
   }
 
-  clear_leo(timer) {
-    console.log("leo cleared");
+  clear_leo() {
     clearTimeout(this.timer);
     this.atOffice = false;
     body.removeChild(document.getElementsByClassName("leoContainer")[0]);
@@ -251,7 +301,7 @@ class Leo extends Character {
 }
 
 function main() {
-  initialize_night([5, false], 5, 5, 5, 5, 5, [5, false]);
+  initialize_night([5, false], 20, 5, 5, 5, 5, [5, false], false);
 }
 
 main();
