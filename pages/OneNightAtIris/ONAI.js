@@ -227,7 +227,7 @@ class Leo extends Character {
       this.atOffice = true;
       const leo = this.spawn_leo();
       this.timer = setTimeout(kill, ((0.95-0.05*(this.ai/2))*1000), "Leo");
-      leo.addEventListener("click", this.clear_leo());
+      leo.addEventListener("click", this.clear_leo);
     }
   }
 
