@@ -18,17 +18,65 @@ function randint(min, max) {
   return Math.floor(Math.random()* (max - min + 1) + min);
 }
 
+function randfloat(min, max) {
+  return Math.floor(randint(min*100, max*100))/100;
+}
 
-function initialize_night([iris, rb] , leo, pickles, hazel, nigel, ruby, [taylor, limbo], longMod) {
-  l = new Leo(leo);
+
+function initialize_night(aiList, longMod, debug) {
   draw_monitor();
   create_monitor_tab();
   create_office();
   display_hour(longMod);
   d = display_power();
+  display_debug(debug);
 
   setInterval(drain_power, 130, d);
   setInterval(update_timers, 10, longMod);
+  initialize_characters(aiList);
+}
+
+function initialize_characters(aiList) {
+  i = new Iris(aiList[0][0], aiList[0][1]);
+  i.readyAttack();
+
+  /*t = new Taylor(aiList[1]);*/
+  l = new Leo(aiList[2]);
+  /*
+  p = new Pickles(aiList[3])
+  h = new Hazel(aiList[4]);
+  n = new Nigel(aiList[5]);
+  r = new Ruby(aiList[6]);
+  */
+}
+
+/*debug timers*/
+function display_debug(state) {
+  if (state) {
+  const debugMenu = document.createElement("div");
+  debugMenu.id = "debug";
+
+  const totalTdebug = document.createElement("p");
+  const cumulOdebug = document.createElement("p");
+  const cumulCdebug = document.createElement("p");
+  setInterval(update_timers_debug, 10, totalTdebug, cumulOdebug, cumulCdebug);
+
+  add_to_debug(debugMenu, [totalTdebug, cumulOdebug, cumulCdebug]);
+  body.appendChild(debugMenu);
+  }
+}
+
+function add_to_debug(debugMenu, debugFeatures) {
+  for (let i=0; i<debugFeatures.length;i++) {
+    debugFeatures[i].className = "debugFeature";
+    debugMenu.appendChild(debugFeatures[i]);
+  }
+}
+
+function update_timers_debug(total, office, cams) {
+  total.textContent = `totaltime: ${totalTime}`;
+  office.textContent = `officetime: ${officeTime}`;
+  cams.textContent = `camtime: ${camTime}`;
 }
 
 /*cameras*/
@@ -200,7 +248,7 @@ function drain_power(display) {
     const toDisplay = String(power);
     display.textContent = `${toDisplay.slice(0, 2)}.${toDisplay.at(2)}%`;
   }
-  else { kill("power out") }
+  else { kill("power out", "") }
 }
 
 function display_hour() {
@@ -238,12 +286,19 @@ function update_timers(longMod) {
   }
 }
 
-function kill(cause) {
+function kill(cause, message) {
   if (alive == true) {
     const deathScreen = document.createElement("div");
     deathScreen.id = "deathScreen";
-    deathScreen.textContent = `You died to ${cause}`;
-    console.log(`You died to ${cause}`);
+
+    const deathBase = document.createElement("h2");
+    deathBase.textContent = `You died to ${cause}`;
+    deathScreen.appendChild(deathBase);
+
+    const deathMSG = document.createElement("h4");
+    deathMSG.textContent = message;
+    deathScreen.appendChild(deathMSG);
+
     body.appendChild(deathScreen);
     alive = false;
   }
@@ -254,6 +309,8 @@ function kill(cause) {
 class Character {
   constructor(ai) {
     this.ai = ai;
+    this.deathMSG = "";
+    this.active = (this.ai > 0);
   }
 
   check_spawn(chance) {
@@ -268,40 +325,149 @@ class Character {
 class Leo extends Character {
   constructor(ai) {
     super(ai);
+    this.active = this.active;
     this.chance = 25;
     this.atOffice = false;
+    this.sprite = this.init_leo();
     this.timer;
+    this.deathMSG = "When he appears, click him quickly to make him go away.";
   }
 
   tryAttack() {
-    if (this.check_spawn(this.chance) && this.atOffice == false) {
+    if (this.check_spawn(this.chance) && this.atOffice == false && this.active == true) {
       this.atOffice = true;
-      const leo = this.spawn_leo();
-      this.timer = setTimeout(kill, ((1.05-0.05*(this.ai/2))*1000), "Leo");
-      leo.addEventListener("click", this.clear_leo.bind(this));
+
+      let coords = [randint(30, 65), randint(25, 70)];
+      (this.sprite).style.left = `${coords[0]}vw`;
+      (this.sprite).style.bottom = `${coords[1]}vh`;
+      (this.sprite).style.display = "block";
+
+      this.timer = setTimeout(kill, ((1.15-0.05*(this.ai/2))*1000), "Leo", this.deathMSG);
     }
   }
 
-  spawn_leo() {
+  init_leo() {
+    if (this.active == true) {
     const containLeo = document.createElement("div");
     containLeo.className = "leoContainer";
-    let coords = [randint(30, 65), randint(25, 70)];
-    containLeo.style.left = `${coords[0]}vw`;
-    containLeo.style.bottom = `${coords[1]}vh`;
 
     body.appendChild(containLeo);
+    containLeo.addEventListener("click", this.clear_leo.bind(this));
     return containLeo;
+    }
   }
 
   clear_leo() {
     clearTimeout(this.timer);
     this.atOffice = false;
-    body.removeChild(document.getElementsByClassName("leoContainer")[0]);
+    (this.sprite).style.display = "none";
+  }
+}
+
+class Iris extends Character {
+  constructor(ai, ragebait) {
+    super(ai);
+    this.ragebait = ragebait;
+    this.active = this.active;
+    this.chance = 20;
+    this.atOffice = false;
+    this.sprite = this.init_iris();
+    this.killTimer;
+    this.vent_check_interval;
+    this.target;
+    this.deathMSG = "He will appear at the vents when you're in the cameras, making a meowing sound. Shut the door on him to make him leave.";
+  }
+
+  tryAttack() {
+    console.log("iris attempted to spawn");
+    if (this.check_spawn(this.chance) && this.atOffice == false && this.active == true) {
+      this.atOffice = true;
+      const ventNum = this.spawn_iris();
+
+      this.killtimer = setTimeout(kill, ((1.6-0.5*this.ai)*1000), "Iris", this.deathMSG);
+
+      this.vent_check_interval = setInterval(this.check_vent_status.bind(this), 10, ventNum);
+      }
+    }
+
+  readyAttack() {
+    if (this.active) {
+      const currCamTime = camTime;
+      const appearTimer = randfloat(1, 1)*1000;
+      this.target = currCamTime + appearTimer;
+
+      setInterval(this.check_timer_status.bind(this), 10);
+    }
+  }
+    
+  check_timer_status() {
+
+    if (monitor_up == true && this.atOffice == false) {
+      console.log("iris readying");
+      if (camTime == this.target) {
+        this.tryAttack();
+      }
+    }
+  }
+
+  check_vent_status(ventNum) {
+    const ventStates = [ClosedLvent, ClosedRvent];
+    if (ventStates[ventNum]) {
+      this.clear_iris();
+    }
+  }
+
+  spawn_iris() {
+    const pos = randint(0, 1);
+    console.log(`iris spawned at pos ${this.pos}`);
+
+    (this.sprite[pos]).display = "block";
+    return pos;
+    }
+
+  init_iris() {
+    if (this.active == true) {
+      console.log("initializing");
+      const lVent = document.getElementById("leftVent");
+      const containleftIris = document.createElement("div");
+      containleftIris.className = "IrisContainer";
+      lVent.appendChild(containleftIris);
+
+      const rVent = document.getElementById("rightVent");
+      const containrightIris = document.createElement("div");
+      containrightIris.className = "IrisContainer";
+      rVent.appendChild(containrightIris);
+
+    return [containleftIris, containrightIris];
+    }
+  }
+
+  clear_iris() {
+    console.log("clearing");
+    clearTimeout(this.killTimer);
+    this.atOffice = false;
+    (this.sprite).style.display = "none";
+
   }
 }
 
 function main() {
-  initialize_night([5, false], 20, 5, 5, 5, 5, [5, false], false);
+  const irisAi = 20;
+  const taylorAi = 5;
+  const leoAi = 0;
+  const picklesAi = 5;
+  const hazelAi = 5;
+  const nigelAi = 5;
+  const rubyAi = 5;
+
+  const longNights = false;
+  const ragebaitMod = false;
+  const LimboMod = false;
+  const debug = true;
+
+  const chars = [[irisAi, ragebaitMod], [taylorAi, LimboMod], leoAi, picklesAi, hazelAi, nigelAi, rubyAi];
+
+  initialize_night(chars, longNights, debug);
 }
 
 main();
