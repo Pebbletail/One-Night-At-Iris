@@ -29,11 +29,12 @@ function initialize_night(aiList, longMod, debug) {
   create_office();
   display_hour(longMod);
   d = display_power();
-  display_debug(debug);
 
   setInterval(drain_power, 130, d);
   setInterval(update_timers, 10, longMod);
+
   initialize_characters(aiList);
+  display_debug(debug);
 }
 
 function initialize_characters(aiList) {
@@ -59,10 +60,18 @@ function display_debug(state) {
   const totalTdebug = document.createElement("p");
   const cumulOdebug = document.createElement("p");
   const cumulCdebug = document.createElement("p");
-  setInterval(update_timers_debug, 10, totalTdebug, cumulOdebug, cumulCdebug);
 
+  setInterval(update_timers_debug, 10, totalTdebug, cumulOdebug, cumulCdebug);
   add_to_debug(debugMenu, [totalTdebug, cumulOdebug, cumulCdebug]);
   body.appendChild(debugMenu);
+
+  if (i.is_active == true) {
+    const irisIntervalDebug = document.createElement("p");
+    setInterval(update_iris_debug, 150, irisIntervalDebug);
+    debugMenu.appendChild(irisIntervalDebug);
+  }
+
+
   }
 }
 
@@ -77,6 +86,10 @@ function update_timers_debug(total, office, cams) {
   total.textContent = `totaltime: ${totalTime}`;
   office.textContent = `officetime: ${officeTime}`;
   cams.textContent = `camtime: ${camTime}`;
+}
+
+function update_iris_debug(display) {
+  display.textContent = `next iris attack: ${i.interval}`;
 }
 
 /*cameras*/
@@ -342,7 +355,7 @@ class Leo extends Character {
       (this.sprite).style.bottom = `${coords[1]}vh`;
       (this.sprite).style.display = "block";
 
-      this.timer = setTimeout(kill, ((1.15-0.05*(this.ai/2))*1000), "Leo", this.deathMSG);
+      this.timer = setTimeout(kill, ((1.35-0.05*(this.ai/2))*1000), "Leo", this.deathMSG);
     }
   }
 
@@ -369,7 +382,7 @@ class Iris extends Character {
     super(ai);
     this.ragebait = ragebait;
     this.active = this.active;
-    this.chance = 20;
+    this.chance = 5; /*30 */
     this.atOffice = false;
     this.sprite = this.init_iris();
     this.killTimer;
@@ -379,21 +392,20 @@ class Iris extends Character {
   }
 
   tryAttack() {
-    console.log("iris attempted to spawn");
     if (this.check_spawn(this.chance) && this.atOffice == false && this.active == true) {
       this.atOffice = true;
       const ventNum = this.spawn_iris();
 
-      this.killtimer = setTimeout(kill, ((1.6-0.5*this.ai)*1000), "Iris", this.deathMSG);
+      this.killTimer = setTimeout(kill, ((1.8-0.05*this.ai)*1000), "Iris", this.deathMSG);
 
-      this.vent_check_interval = setInterval(this.check_vent_status.bind(this), 10, ventNum);
+      this.vent_check_interval = setInterval(this.check_vent_status.bind(this), 5, ventNum);
       }
     }
 
   readyAttack() {
     if (this.active) {
       const currCamTime = camTime;
-      const appearTimer = randfloat(1, 1)*1000;
+      const appearTimer = randfloat(4, 6)*1000;
       this.target = currCamTime + appearTimer;
 
       setInterval(this.check_timer_status.bind(this), 10);
@@ -403,7 +415,6 @@ class Iris extends Character {
   check_timer_status() {
 
     if (monitor_up == true && this.atOffice == false) {
-      console.log("iris readying");
       if (camTime == this.target) {
         this.tryAttack();
       }
@@ -413,21 +424,18 @@ class Iris extends Character {
   check_vent_status(ventNum) {
     const ventStates = [ClosedLvent, ClosedRvent];
     if (ventStates[ventNum]) {
-      this.clear_iris();
+      this.clear_iris.bind(this)(ventNum);
     }
   }
 
   spawn_iris() {
     const pos = randint(0, 1);
-    console.log(`iris spawned at pos ${this.pos}`);
-
-    (this.sprite[pos]).display = "block";
+    (this.sprite.at(pos)).style.display = "block";
     return pos;
     }
 
   init_iris() {
     if (this.active == true) {
-      console.log("initializing");
       const lVent = document.getElementById("leftVent");
       const containleftIris = document.createElement("div");
       containleftIris.className = "IrisContainer";
@@ -442,19 +450,28 @@ class Iris extends Character {
     }
   }
 
-  clear_iris() {
-    console.log("clearing");
+  clear_iris(ventNum) {
     clearTimeout(this.killTimer);
+    clearInterval(this.vent_check_interval);
     this.atOffice = false;
-    (this.sprite).style.display = "none";
+    (this.sprite.at(ventNum)).style.display = "none";
 
+    this.readyAttack();
+  }
+
+  get is_active() {
+    return this.active;
+  }
+
+  get interval() {
+    return this.target;
   }
 }
 
 function main() {
-  const irisAi = 20;
+  const irisAi = 5;
   const taylorAi = 5;
-  const leoAi = 0;
+  const leoAi = 5;
   const picklesAi = 5;
   const hazelAi = 5;
   const nigelAi = 5;
