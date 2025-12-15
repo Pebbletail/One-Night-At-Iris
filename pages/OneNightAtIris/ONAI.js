@@ -41,7 +41,7 @@ function initialize_characters(aiList) {
   i = new Iris(aiList[0][0], aiList[0][1]);
   i.readyAttack();
 
-  /*t = new Taylor(aiList[1]);*/
+  t = new Taylor(aiList[1][0], aiList[1][1]);
   l = new Leo(aiList[2]);
   /*
   p = new Pickles(aiList[3])
@@ -276,6 +276,8 @@ function increase_hour() {
   hour += 1;
   const toDisplay = String(hour);
   display.textContent = `${toDisplay}AM`;
+
+  t.tryAttack();
 }
 
 function update_timers(longMod) {
@@ -347,7 +349,8 @@ class Leo extends Character {
   }
 
   tryAttack() {
-    if (this.check_spawn(this.chance) && this.atOffice == false && this.active == true) {
+    if (this.active == true) {
+    if (this.check_spawn(this.chance) && this.atOffice == false) {
       this.atOffice = true;
 
       let coords = [randint(30, 65), randint(25, 70)];
@@ -356,6 +359,7 @@ class Leo extends Character {
       (this.sprite).style.display = "block";
 
       this.timer = setTimeout(kill, ((1.35-0.05*(this.ai/2))*1000), "Leo", this.deathMSG);
+    }
     }
   }
 
@@ -382,7 +386,7 @@ class Iris extends Character {
     super(ai);
     this.ragebait = ragebait;
     this.active = this.active;
-    this.chance = 5; /*30 */
+    this.chance = 30;
     this.atOffice = false;
     this.sprite = this.init_iris();
     this.killTimer;
@@ -392,15 +396,17 @@ class Iris extends Character {
   }
 
   tryAttack() {
-    if (this.check_spawn(this.chance) && this.atOffice == false && this.active == true) {
+    if (this.active == true) {
+    if (this.check_spawn(this.chance) && this.atOffice == false) {
       this.atOffice = true;
       const ventNum = this.spawn_iris();
 
       this.killTimer = setTimeout(kill, ((1.8-0.05*this.ai)*1000), "Iris", this.deathMSG);
 
       this.vent_check_interval = setInterval(this.check_vent_status.bind(this), 5, ventNum);
-      }
     }
+    }
+  }
 
   readyAttack() {
     if (this.active) {
@@ -436,6 +442,8 @@ class Iris extends Character {
 
   init_iris() {
     if (this.active == true) {
+      this.sound = document.createElement("AUDIO");
+      
       const lVent = document.getElementById("leftVent");
       const containleftIris = document.createElement("div");
       containleftIris.className = "IrisContainer";
@@ -468,10 +476,79 @@ class Iris extends Character {
   }
 }
 
+class Taylor extends Character {
+  constructor(ai, limbo) {
+    super(ai);
+    this.limbo = limbo;
+    this.active = this.active;
+    this.chance = (Math.floor(this.ai/4)+1);
+    this.sprite = this.init_taylor();
+    this.clickLoc;
+    this.timer;
+    this.deathMSG = "Every hour she might put her bowtie on, double click it to make her take it off before she kills you.";
+  }
+
+  tryAttack() {
+    if (this.active == true) {
+    if (this.roll_taylor() == true) {
+      this.change_taylor_disp();
+
+      this.timer = setTimeout(kill, ((6 - 0.1*this.ai)*1000), "Taylor", this.deathMSG);
+
+    }
+    }
+  }
+
+    init_taylor() {
+    if (this.active == true) {
+      console.log("talore");
+    const containTaylor = document.createElement("div");
+    containTaylor.className = "taylorContainer";
+    body.appendChild(containTaylor);
+
+    const taylorBow = document.createElement("div");
+    taylorBow.className = "taylorBow";
+    taylorBow.id = "0";
+    this.clickLoc = taylorBow;
+
+    containTaylor.appendChild(taylorBow);
+
+    taylorBow.addEventListener("click", this.clear_taylor.bind(this));
+    return containTaylor;
+    }
+  }
+
+    roll_taylor() {
+      console.log(this.chance);
+      return (randint(1, 6) <= this.chance);
+    }
+
+    change_taylor_disp() {
+      if (this.limbo == false) {
+        (this.clickLoc).style.display = "block";
+        (this.sprite).style.backgroundImage = `url("../../resources/ONAI/taylorBowtie.png")`
+        return 0;
+      }
+    }
+
+    clear_taylor(num) {
+      if ((this.clickLoc).id == "0") {
+        (this.clickLoc).id = "1"
+      }
+
+      else {if ((this.clickLoc).id == "1") {
+        (this.clickLoc).style.display = "none";
+        clearTimeout(this.timer);
+        (this.sprite).style.backgroundImage = `url("../../resources/ONAI/taylorDefault.png")`;
+        (this.clickLoc).id = "0";
+      } }
+  }
+}
+
 function main() {
-  const irisAi = 5;
-  const taylorAi = 5;
-  const leoAi = 5;
+  const irisAi = 2;
+  const taylorAi = 20;
+  const leoAi = 0;
   const picklesAi = 5;
   const hazelAi = 5;
   const nigelAi = 5;
