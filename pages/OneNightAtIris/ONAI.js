@@ -14,12 +14,18 @@ let ClosedRvent = false;
 
 let alive = true;
 
+const camScenes = create_camera_scenes();
+
 function randint(min, max) {
   return Math.floor(Math.random()* (max - min + 1) + min);
 }
 
 function randfloat(min, max) {
   return Math.floor(randint(min*100, max*100))/100;
+}
+
+function choice(list) {
+  return list.at(randint(0, list.length-1));
 }
 
 
@@ -43,8 +49,9 @@ function initialize_characters(aiList) {
 
   t = new Taylor(aiList[1][0], aiList[1][1]);
   l = new Leo(aiList[2]);
+  
+  p = new Pickles(aiList[3]);
   /*
-  p = new Pickles(aiList[3])
   h = new Hazel(aiList[4]);
   n = new Nigel(aiList[5]);
   r = new Ruby(aiList[6]);
@@ -96,7 +103,10 @@ function update_iris_debug(display) {
 function create_camera_scenes() {
   let scenes = [];
   for (let i=1; i<4; i++) {
-    scenes.push(`../../resources/ONAI/Cam${i}.jpg`);
+    const cam = document.createElement("div");
+    cam.style.backgroundImage = `url("../../resources/ONAI/Cam${i}.jpg")`;
+    cam.className = "cameraScene";
+    scenes.push(cam);
   }
   return scenes;
 }
@@ -159,6 +169,10 @@ function draw_monitor() {
     if (i==1) {
       camButton.style.backgroundColor = "lime";
     }
+
+    for (let i=0; i<3; i++) {
+      monitor.appendChild(camScenes[i]);
+    }
     
     
     monitor.appendChild(camButton);
@@ -167,17 +181,17 @@ function draw_monitor() {
 }
 
 function display_camera(num) {
-  const camRooms = create_camera_scenes();
-  const monitor = document.getElementById("monitor");
-  monitor.style.backgroundImage = `url(${camRooms[num]})`;
+  camScenes.at(num).style.display = "block";
 }
 
 function change_camera(self) {
   const content = self.textContent;
   const last = document.getElementsByClassName("camButtons")[last_cam];
   last.style.backgroundColor = "black";
+  camScenes[last_cam].style.display = "none";
   
   curr_cam = Number(content.at(-1)) -1;
+
   display_camera(curr_cam);
   self.style.backgroundColor = "lime";
   last_cam = curr_cam;
@@ -390,6 +404,7 @@ class Iris extends Character {
     this.atOffice = false;
     this.sprite = this.init_iris();
     this.killTimer;
+    this.sound;
     this.vent_check_interval;
     this.target;
     this.deathMSG = "He will appear at the vents when you're in the cameras, making a meowing sound. Shut the door on him to make him leave.";
@@ -400,16 +415,18 @@ class Iris extends Character {
     if (this.check_spawn(this.chance) && this.atOffice == false) {
       this.atOffice = true;
       const ventNum = this.spawn_iris();
+      (this.sound).play();
 
-      this.killTimer = setTimeout(kill, ((1.8-0.05*this.ai)*1000), "Iris", this.deathMSG);
+      this.killTimer = setTimeout(kill, ((2.15-0.05*this.ai)*1000), "Iris", this.deathMSG);
 
       this.vent_check_interval = setInterval(this.check_vent_status.bind(this), 5, ventNum);
     }
+    else {this.readyAttack(); }
     }
   }
 
   readyAttack() {
-    if (this.active) {
+    if (this.active && alive==true) {
       const currCamTime = camTime;
       const appearTimer = randfloat(4, 6)*1000;
       this.target = currCamTime + appearTimer;
@@ -421,7 +438,7 @@ class Iris extends Character {
   check_timer_status() {
 
     if (monitor_up == true && this.atOffice == false) {
-      if (camTime == this.target) {
+      if ((camTime > this.target-5) && (camTime < this.target+5)) {
         this.tryAttack();
       }
     }
@@ -443,6 +460,7 @@ class Iris extends Character {
   init_iris() {
     if (this.active == true) {
       this.sound = document.createElement("AUDIO");
+      (this.sound).src = "../../resources/ONAI/iris_meow.mp3";
       
       const lVent = document.getElementById("leftVent");
       const containleftIris = document.createElement("div");
@@ -493,7 +511,7 @@ class Taylor extends Character {
     if (this.roll_taylor() == true) {
       this.change_taylor_disp();
 
-      this.timer = setTimeout(kill, ((6 - 0.1*this.ai)*1000), "Taylor", this.deathMSG);
+      this.timer = setTimeout(kill, ((4.5 - 0.1*this.ai)*1000), "Taylor", this.deathMSG);
 
     }
     }
@@ -526,7 +544,7 @@ class Taylor extends Character {
     change_taylor_disp() {
       if (this.limbo == false) {
         (this.clickLoc).style.display = "block";
-        (this.sprite).style.backgroundImage = `url("../../resources/ONAI/taylorBowtie.png")`
+        (this.sprite).style.backgroundImage = `url("../../resources/ONAI/taylorBowtie.png")`;
         return 0;
       }
     }
@@ -545,8 +563,56 @@ class Taylor extends Character {
   }
 }
 
+class Pickles extends Character {
+  constructor(ai) {
+    super(ai);
+    this.active = this.active;
+    this.chance = 25;
+    this.sprite = this.init_pickles();
+    this.p_cam = 0;
+    this.max = (30-this.ai)*1000
+    this.timer = this.max;
+    this.deathMSG = "Track him in the cameras. Going too long without looking at him will make him angry.";
+  }
+
+  init_pickles() {
+    if (this.active) {
+    setInterval(20, this.check_looking.bind(this));
+
+    for (let i=0; i<6; i++) {
+      const picklesCont = document.createElement("div");
+      picklesCont.className = "picklesContainer";
+      picklesCont.id = `picklesCam${i%3}Cont${i%2}`;
+
+      camScenes[i%3].appendChild(picklesCont);
+    }
+    }
+  }
+
+  check_looking() {
+    if (curr_cam == p_cam && monitor_up) {
+      this.timer += 20; }
+    else {
+      this.timer -= 20; }
+
+    if (this.timer <= 0) {
+      kill("Pickles", this.deathMSG);
+    }
+  
+    if (this.timer > this.max) {
+      this.timer = this.max;
+    }
+  }
+
+
+  get killtimer() {
+    return this.timer;
+  }
+
+}
+
 function main() {
-  const irisAi = 2;
+  const irisAi = 0;
   const taylorAi = 20;
   const leoAi = 0;
   const picklesAi = 5;
