@@ -51,6 +51,8 @@ function initialize_characters(aiList) {
   l = new Leo(aiList[2]);
   
   p = new Pickles(aiList[3]);
+  p.init_pickles();
+
   /*
   h = new Hazel(aiList[4]);
   n = new Nigel(aiList[5]);
@@ -78,8 +80,12 @@ function display_debug(state) {
     debugMenu.appendChild(irisIntervalDebug);
   }
 
-
+  if (p.is_active == true) {
+    const picklesKillTimeDebug = document.createElement("p");
+    setInterval(update_pickles_debug, 20, picklesKillTimeDebug);
+    debugMenu.appendChild(picklesKillTimeDebug);
   }
+}
 }
 
 function add_to_debug(debugMenu, debugFeatures) {
@@ -97,6 +103,10 @@ function update_timers_debug(total, office, cams) {
 
 function update_iris_debug(display) {
   display.textContent = `next iris attack: ${i.interval}`;
+}
+
+function update_pickles_debug(display) {
+  display.textContent = `pickles kill timer: ${p.killtimer}`;
 }
 
 /*cameras*/
@@ -138,6 +148,8 @@ function pull_up_monitor() {
   const cams = document.getElementsByClassName("camEl");
   for (let i=0; i<cams.length;i++) {
     cams[i].style.display = "block"; }
+
+  p.tryMove();
 }
 
 function pull_down_monitor() {
@@ -537,7 +549,6 @@ class Taylor extends Character {
   }
 
     roll_taylor() {
-      console.log(this.chance);
       return (randint(1, 6) <= this.chance);
     }
 
@@ -567,33 +578,59 @@ class Pickles extends Character {
   constructor(ai) {
     super(ai);
     this.active = this.active;
-    this.chance = 25;
-    this.sprite = this.init_pickles();
+    this.chance = this.ai+13;
+    this.sprites;
     this.p_cam = 0;
+    this.lastPosition = [0, 0];
     this.max = (30-this.ai)*1000
-    this.timer = this.max;
+    this.timer = (30-this.ai)*1000;
     this.deathMSG = "Track him in the cameras. Going too long without looking at him will make him angry.";
   }
 
+  tryMove() {
+    if (this.active) {
+      if (this.roll_pickles()) {
+        let loc = this.get_movement_pos();
+        this.move_to_cam(loc);
+        }
+      }
+    }
+
   init_pickles() {
     if (this.active) {
-    setInterval(20, this.check_looking.bind(this));
-
-    for (let i=0; i<6; i++) {
+    setInterval(this.check_looking.bind(this), 20);
+    let spriteList = [[],[],[]];
+    for (let i=0; i<3; i++) {
+      for (let x=0; x<2; x++) {
       const picklesCont = document.createElement("div");
       picklesCont.className = "picklesContainer";
-      picklesCont.id = `picklesCam${i%3}Cont${i%2}`;
+      picklesCont.id = `picklesCam${i}Cont${x}`;
+      picklesCont.style.backgroundImage = `url("../../resources/ONAI/pickles1.png")`;
+      spriteList[i].push(picklesCont);
 
-      camScenes[i%3].appendChild(picklesCont);
+      camScenes[i].appendChild(picklesCont);
     }
     }
-  }
+
+    this.sprite = spriteList;
+    this.move_to_cam([randint(0, 2), randint(0, 1)]);
+  } else {return "pickles Inactive";}
+}
+
+  roll_pickles() {
+      return (randint(1, this.chance) <= Math.ceil(this.ai*1.5));
+    }
 
   check_looking() {
-    if (curr_cam == p_cam && monitor_up) {
+    if (alive) {
+    if (curr_cam == this.p_cam && monitor_up) {
       this.timer += 20; }
     else {
       this.timer -= 20; }
+
+    if (monitor_up && (totalTime % 4500 == 0)) {
+      this.tryMove()}
+
 
     if (this.timer <= 0) {
       kill("Pickles", this.deathMSG);
@@ -603,19 +640,52 @@ class Pickles extends Character {
       this.timer = this.max;
     }
   }
+  }
 
+  move_to_cam(loc) {
+    this.p_cam = loc[0];
+    const curr_sprite = this.get_sprite_at_pos(loc);
+    const last = this.get_sprite_at_pos(this.lastPosition);
+
+    curr_sprite.style.display = "block";
+    last.style.display = "none";
+    this.lastPosition = loc;
+
+    console.log(`moved to cam${loc[0]} pos${loc[1]}`);
+  }
+
+  get_movement_pos(type) {
+    let move = [];
+    for (let i=2; i>0; i--) {
+      move.push(randint(0, i));
+    }
+
+    if (move[0] == this.lastPosition[0]) {
+      console.log("movement on same cam as last");
+      move[0] = (move[0] + randint(1, 2)) % 3;
+    }
+
+    return move;
+  }
+
+  get_sprite_at_pos(loc) {
+    return this.sprite[loc[0]][loc[1]];
+  }
+
+  get is_active() {
+    return this.active;
+  }
 
   get killtimer() {
     return this.timer;
   }
-
 }
 
 function main() {
   const irisAi = 0;
-  const taylorAi = 20;
+  const taylorAi = 0;
   const leoAi = 0;
-  const picklesAi = 5;
+  const picklesAi = 0;
   const hazelAi = 5;
   const nigelAi = 5;
   const rubyAi = 5;

@@ -204,8 +204,7 @@ body {
   background-repeat: no-repeat;
   background-size: cover;
   position: fixed;
-
-  border: red dotted 2px;
+  display: none;
 }
 
 #picklesCam0Cont0 {
@@ -236,5 +235,4 @@ body {
 #picklesCam2Cont1 {
   bottom: 35vh;
   right: 20vw;
-
 }
