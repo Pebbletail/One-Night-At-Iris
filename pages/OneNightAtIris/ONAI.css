@@ -278,3 +278,52 @@ body {
   top: 35vh;
   left: 25vw;
 }
+
+.NigelContainer {
+  width: 5vw;
+  height: 6.666vw;
+  background-image: url("../../resources/ONAI/Nigel.png");
+
+  background-repeat: no-repeat;
+  background-size: contain;
+  position: fixed;
+  display: none;
+}
+
+.rubyCamContainer {
+  width: 16vw;
+  height: 21.333vw;
+  background-image: url("../../resources/ONAI/rubyCam.png");
+
+  background-repeat: no-repeat;
+  background-size: contain;
+  position: fixed;
+  display: none;
+}
+
+#rubyCam0Cont {
+  top: 40vh;
+  left: 70vw;
+}
+
+#rubyCam1Cont {
+  bottom: 40vh;
+  right: 60vw;
+}
+
+#rubyCam2Cont {
+  bottom: 25vh;
+  left: 35vw;
+}
+
+.rubyVentContainer {
+  width: 5vw;
+  height: 6.666vw;
+  /*background-image: url("../../resources/ONAI/rubyVent.png");
+
+  background-repeat: no-repeat;
+  background-size: contain;*/
+  background-color: azure;
+  position: fixed;
+  display: none;
+}

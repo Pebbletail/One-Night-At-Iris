@@ -56,10 +56,10 @@ function initialize_characters(aiList) {
   h = new Hazel(aiList[4]);
   h.init_hazel();
 
-  /*
-  n = new Nigel(aiList[5]);
+  
+  /* n = new Nigel(aiList[5]); */
+  
   r = new Ruby(aiList[6]);
-  */
 }
 
 /*debug timers*/
@@ -220,6 +220,7 @@ function change_camera(self) {
   self.style.backgroundColor = "lime";
   last_cam = curr_cam;
 
+  r.tryMove();
 }
 
 /*vents*/
@@ -383,6 +384,7 @@ class Character {
   }
 
   move_to_cam(loc) {
+
     this.char_cam = loc[0];
     const curr_sprite = this.get_sprite_at_pos(loc);
     const last = this.get_sprite_at_pos(this.lastPosition);
@@ -390,8 +392,6 @@ class Character {
     curr_sprite.style.display = "block";
     last.style.display = "none";
     this.lastPosition = loc;
-
-    console.log(`moved to cam${loc[0]} pos${loc[1]}`);
   }
 
   get_movement_pos() {
@@ -814,14 +814,193 @@ class Hazel extends Character {
   }
 }
 
+class Ruby extends Character {
+  constructor(ai) {
+    super(ai);
+    this.active = this.active;
+    this.chance = 25;
+
+    this.inCams = false;
+    this.maxcooldown = 20000 - (this.ai*500);
+    this.cooldownActive = false;
+    this.anger;
+    this.attack_threshold = 2000 - (this.ai*50);
+
+    this.vent_check_interval;
+    this.cam_check_interval;
+    this.killTimer;
+    this.ventTimer;
+    
+    this.camsprites = this.init_ruby();
+    this.ventsprite;
+    this.char_cam;
+    this.lastPosition = 0;
+    this.deathMSG = "She will sometimes appear on the cameras, quickly switch cams to make her go away. If you look at Ruby for too long or pull the monitor down while she's on the camera she will enter the left vent.";
+  }
+
+  tryMove() {
+    if (this.active) {
+      if (this.check_spawn(this.chance) && this.inCams == false && !(this.cooldownActive)) {
+        this.ruby_move_cam();
+        console.log("moved");
+        this.inCams = true;
+
+        if (p.is_active) {
+          if (this.char_cam == p.get_cam) {
+            if (randint(1, 5) < 3) {
+              this.clear_ruby(false); }}}
+      }
+    }
+  }
+
+  init_ruby() {
+    if (this.active) {
+    let spriteList = [];
+    for (let i=0; i<3; i++) {
+      const rubyCont = document.createElement("div");
+      rubyCont.className = "rubyCamContainer";
+      rubyCont.id = `rubyCam${i}Cont`;
+      rubyCont.style.backgroundImage = `url("../../resources/ONAI/rubyCam.png")`;
+      spriteList.push(rubyCont);
+
+      camScenes[i].appendChild(rubyCont);
+    }
+
+    const rVent = document.getElementById("rightVent");
+    const ventSp = document.createElement("div");
+    ventSp.className = "rubyVentContainer";
+    rVent.appendChild(ventSp);
+    this.ventsprite = ventSp;
+
+    return spriteList;
+
+  } else {return "ruby Inactive";}
+}
+
+  ruby_move_cam() {
+    this.char_cam = curr_cam;
+    (this.camsprites[curr_cam]).style.display = "block";
+    this.cam_check_interval = setInterval(this.ruby_cam_logic.bind(), 20);
+
+  }
+
+  ruby_cam_logic() {
+    if (alive) {
+    if (this.check_looking()) {
+      console.log("looking at ruby");
+      this.anger += 20; } else{console.log("not Looking");}
+
+    if (this.anger >= this.attack_threshold) {
+      console.log("ruby attack");
+      this.anger = 0;
+      this.ruby_attack();
+    }
+  }
+  }
+
+
+  ruby_attack() {
+    (this.ventsprite).style.display = "block";
+
+    this.killTimer = setTimeout(kill, this.attack_threshold, "Ruby", this.deathMSG);
+    this.vent_check_interval = setInterval(this.check_vent_status.bind(this), 5, ventNum);
+
+  }
+
+  check_vent_status() {
+    if (this.ventTimer >= 100) {
+      clear_ruby(true);
+    }
+
+    if (ClosedLvent) {
+      this.ventTimer += 5;
+    }
+  }
+
+  clear_ruby(setCooldown) {
+    clearTimeout(this.killTimer);
+    clearInterval(this.vent_check_interval);
+    clearInterval(this.cam_check_interval);
+    this.ventTimer = 0;
+
+    if (setCooldown) {
+      this.cooldownTimer = setTimeout(this.update_cooldown.bind(this), this.maxcooldown);
+    }
+  }
+
+  update_cooldown() {
+    this.cooldownActive = false;
+  }
+
+  get ready() {
+    return !(this.cooldownActive);
+  }
+}
+
+
+/* class Nigel extends Character {
+  constructor(ai) {
+    super(ai);
+    this.active = this.active;
+    this.chance = 30;
+    this.atOffice = false;
+    this.sprite = this.init_nigel();
+    this.sound;
+    this.kill_check_interval;
+    this.pet = 0;
+    this.deathMSG = "He will appear at the right vents when you're in the office, Pet him to make him leave. Closing the door or pulling up the monitor will make him angry.";
+  }
+
+  tryAttack() {
+    if (this.active == true) {
+    if (this.check_spawn(this.chance) && this.atOffice == false) {
+      this.atOffice = true;
+      this.spawn_nigel();
+
+    }
+    }
+  }
+    
+  nigel_anger_logic() {
+    this.pet += 1;
+    if ((this.sprite).id == "touchNigel") {
+      if (this.pet > )
+    }
+  }
+
+  spawn_nigel() {
+    this.touch = Boolean(randint(0, 1));
+    (this.sprite).style.display = "block";
+    (this.sprite).id = choice(["touchNigel", "leaveNigel"]);
+    }
+
+  init_nigel() {
+    if (this.active == true) {
+      const rVent = document.getElementById("rightVent");
+      const containNigel = document.createElement("div");
+      containNigel.className = "NigelContainer";
+      rVent.appendChild(containNigel);
+      containNigel.addEventListener("onmousemove", this.nigel_anger_logic.bind(this));
+
+      return containNigel;
+    }
+  }
+
+  clear_nigel() {
+    if ((this.sprite).id == "touchNigel") {
+
+    }
+  }
+} */
+
 function main() {
-  const irisAi = 10;
-  const taylorAi = 10;
-  const leoAi = 10;
-  const picklesAi = 10;
-  const hazelAi = 20;
+  const irisAi = 0;
+  const taylorAi = 0;
+  const leoAi = 0;
+  const picklesAi = 0;
+  const hazelAi = 0;
   const nigelAi = 5;
-  const rubyAi = 5;
+  const rubyAi = 30;
 
   const longNights = false;
   const ragebaitMod = false;
