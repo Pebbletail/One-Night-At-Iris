@@ -88,6 +88,7 @@ body {
   display: flex;
   width: 100vw;
   height: 100vh;
+  left: 0px;
 
   position: absolute;
   background-color: black;
@@ -107,7 +108,8 @@ body {
 
 .cameraScene {
   width: 100vw;
-  height: 100%;
+  height: 100vh;
+  top: 0px;
 
   position: absolute;
   background-color: black;
@@ -213,8 +215,8 @@ body {
 }
 
 #picklesCam0Cont1 {
-  bottom: 30vh;
-  right: 20vw;
+  bottom: 20vh;
+  right: 40vw;
 }
 
 #picklesCam1Cont0 {
@@ -235,4 +237,44 @@ body {
 #picklesCam2Cont1 {
   bottom: 35vh;
   right: 20vw;
+}
+
+.hazelContainer{
+  width: 12vw;
+  height: 16vw;
+
+  background-repeat: no-repeat;
+  background-size: cover;
+  position: fixed;
+  display: none;
+}
+
+#hazelCam0Cont0 {
+  bottom: 30vh;
+  right: 20vw;
+}
+
+#hazelCam0Cont1 {
+  top: 30vh;
+  left: 28vw;
+}
+
+#hazelCam1Cont0 {
+  bottom: 50vh;
+  right: 35vw;
+}
+
+#hazelCam1Cont1 {
+  top: 10vh;
+  left: 20vw;
+}
+
+#hazelCam2Cont0 {
+  bottom: 30vh;
+  right: 40vw;
+}
+
+#hazelCam2Cont1 {
+  top: 35vh;
+  left: 25vw;
 }

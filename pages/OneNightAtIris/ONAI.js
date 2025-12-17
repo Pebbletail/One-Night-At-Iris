@@ -53,8 +53,10 @@ function initialize_characters(aiList) {
   p = new Pickles(aiList[3]);
   p.init_pickles();
 
-  /*
   h = new Hazel(aiList[4]);
+  h.init_hazel();
+
+  /*
   n = new Nigel(aiList[5]);
   r = new Ruby(aiList[6]);
   */
@@ -85,6 +87,12 @@ function display_debug(state) {
     setInterval(update_pickles_debug, 20, picklesKillTimeDebug);
     debugMenu.appendChild(picklesKillTimeDebug);
   }
+
+  if (h.is_active == true) {
+    const hazelTimerDebug = document.createElement("p");
+    setInterval(update_hazel_debug, 20, hazelTimerDebug);
+    debugMenu.appendChild(hazelTimerDebug);
+  }
 }
 }
 
@@ -107,6 +115,10 @@ function update_iris_debug(display) {
 
 function update_pickles_debug(display) {
   display.textContent = `pickles kill timer: ${p.killtimer}`;
+}
+
+function update_hazel_debug(display) {
+  display.textContent = `hazel attack timer: ${h.timer}`;
 }
 
 /*cameras*/
@@ -282,7 +294,7 @@ function display_power() {
 
 function drain_power(display) {
   if (power > 0) {
-    const usage = 0.5 + Number(monitor_up) + Number(ClosedLvent) * 1.5 + Number(ClosedRvent) * 1.5;
+    const usage = 0.5 + Number(monitor_up)*2 + Number(ClosedLvent) * 3 + Number(ClosedRvent) * 3;
     power -= usage;
     const toDisplay = String(power);
     display.textContent = `${toDisplay.slice(0, 2)}.${toDisplay.at(2)}%`;
@@ -352,6 +364,9 @@ class Character {
     this.ai = ai;
     this.deathMSG = "";
     this.active = (this.ai > 0);
+    this.char_cam;
+    this.lastPosition;
+    this.sprite;
   }
 
   check_spawn(chance) {
@@ -359,6 +374,45 @@ class Character {
       return true; }
     else {
       return false; }
+  }
+
+  check_looking() {
+    if (curr_cam == this.char_cam && monitor_up) {
+      return true; }
+    else { return false; }
+  }
+
+  move_to_cam(loc) {
+    this.char_cam = loc[0];
+    const curr_sprite = this.get_sprite_at_pos(loc);
+    const last = this.get_sprite_at_pos(this.lastPosition);
+
+    curr_sprite.style.display = "block";
+    last.style.display = "none";
+    this.lastPosition = loc;
+
+    console.log(`moved to cam${loc[0]} pos${loc[1]}`);
+  }
+
+  get_movement_pos() {
+    let move = [];
+    for (let i=2; i>0; i--) {
+      move.push(randint(0, i));
+    }
+
+    if (move[0] == this.lastPosition[0]) {
+      move[0] = (move[0] + randint(1, 2)) % 3;
+    }
+
+    return move;
+  }
+
+  get_sprite_at_pos(loc) {
+    return this.sprite[loc[0]][loc[1]];
+  }
+
+  get is_active() {
+    return this.active;
   }
 
 }
@@ -513,6 +567,7 @@ class Taylor extends Character {
     this.active = this.active;
     this.chance = (Math.floor(this.ai/4)+1);
     this.sprite = this.init_taylor();
+    this.sound;
     this.clickLoc;
     this.timer;
     this.deathMSG = "Every hour she might put her bowtie on, double click it to make her take it off before she kills you.";
@@ -531,7 +586,8 @@ class Taylor extends Character {
 
     init_taylor() {
     if (this.active == true) {
-      console.log("talore");
+    this.sound = document.createElement("AUDIO");
+    (this.sound).src = "../../resources/ONAI/okthenMeow.mp3";
     const containTaylor = document.createElement("div");
     containTaylor.className = "taylorContainer";
     body.appendChild(containTaylor);
@@ -562,7 +618,7 @@ class Taylor extends Character {
 
     clear_taylor(num) {
       if ((this.clickLoc).id == "0") {
-        (this.clickLoc).id = "1"
+        (this.clickLoc).id = "1";
       }
 
       else {if ((this.clickLoc).id == "1") {
@@ -570,6 +626,9 @@ class Taylor extends Character {
         clearTimeout(this.timer);
         (this.sprite).style.backgroundImage = `url("../../resources/ONAI/taylorDefault.png")`;
         (this.clickLoc).id = "0";
+        if (randint(1, 50) == 50) {
+          (this.sound).play();
+        }
       } }
   }
 }
@@ -580,7 +639,8 @@ class Pickles extends Character {
     this.active = this.active;
     this.chance = this.ai+13;
     this.sprites;
-    this.p_cam = 0;
+    this.sound;
+    this.char_cam = randint(0, 2);
     this.lastPosition = [0, 0];
     this.max = (30-this.ai)*1000
     this.timer = (30-this.ai)*1000;
@@ -592,13 +652,17 @@ class Pickles extends Character {
       if (this.roll_pickles()) {
         let loc = this.get_movement_pos();
         this.move_to_cam(loc);
+
         }
       }
     }
 
   init_pickles() {
     if (this.active) {
-    setInterval(this.check_looking.bind(this), 20);
+      this.sound = document.createElement("AUDIO");
+      (this.sound).src = "../../resources/ONAI/pickles_purr.mp3";
+    setInterval(this.pickles_cam_logic.bind(this), 20);
+    setInterval(this.pickles_sound_logic.bind(this), 100);
     let spriteList = [[],[],[]];
     for (let i=0; i<3; i++) {
       for (let x=0; x<2; x++) {
@@ -621,9 +685,9 @@ class Pickles extends Character {
       return (randint(1, this.chance) <= Math.ceil(this.ai*1.5));
     }
 
-  check_looking() {
+  pickles_cam_logic() {
     if (alive) {
-    if (curr_cam == this.p_cam && monitor_up) {
+    if (this.check_looking()) {
       this.timer += 20; }
     else {
       this.timer -= 20; }
@@ -642,51 +706,120 @@ class Pickles extends Character {
   }
   }
 
-  move_to_cam(loc) {
-    this.p_cam = loc[0];
-    const curr_sprite = this.get_sprite_at_pos(loc);
-    const last = this.get_sprite_at_pos(this.lastPosition);
-
-    curr_sprite.style.display = "block";
-    last.style.display = "none";
-    this.lastPosition = loc;
-
-    console.log(`moved to cam${loc[0]} pos${loc[1]}`);
-  }
-
-  get_movement_pos(type) {
-    let move = [];
-    for (let i=2; i>0; i--) {
-      move.push(randint(0, i));
-    }
-
-    if (move[0] == this.lastPosition[0]) {
-      console.log("movement on same cam as last");
-      move[0] = (move[0] + randint(1, 2)) % 3;
-    }
-
-    return move;
-  }
-
-  get_sprite_at_pos(loc) {
-    return this.sprite[loc[0]][loc[1]];
-  }
-
-  get is_active() {
-    return this.active;
+  pickles_sound_logic() {
+    if (alive && this.timer < 3000) {
+      (this.sound).play();
+    } else { (this.sound).pause()}
   }
 
   get killtimer() {
     return this.timer;
   }
+
+  get get_cam() {
+    return this.char_cam;
+  }
+}
+
+class Hazel extends Character {
+  constructor(ai) {
+    super(ai);
+    this.active = this.active;
+    this.chance = this.ai+15;
+    this.sprites;
+    this.sound;
+    this.char_cam = randint(0, 2);
+    this.lastPosition = [0, 0];
+    this.max = (29-this.ai)*1000
+    this.timer = (29-this.ai)*500;
+    this.drain = Math.ceil(this.ai/4)*100;
+    this.deathMSG = "She will move around the cameras, looking at her for too long will cause her to drain your power.";
+  }
+
+  tryMove() {
+    if (this.active) {
+      if (this.roll_hazel()) {
+        let loc = this.get_movement_pos();
+        this.move_to_cam(loc);
+
+        if (p.is_active) {
+          if (this.char_cam == p.get_cam) {
+            if (randint(1, 5) < 3) {
+              let loc = this.get_movement_pos();
+              this.move_to_cam(loc); }}}
+      }
+    }
+  }
+
+  init_hazel() {
+    if (this.active) {
+    this.sound = document.createElement("AUDIO");
+    (this.sound).src = "../../resources/ONAI/PowerSpark.mp3";
+    setInterval(this.hazel_cam_logic.bind(this), 20);
+    let spriteList = [[],[],[]];
+    for (let i=0; i<3; i++) {
+      for (let x=0; x<2; x++) {
+      const hazelCont = document.createElement("div");
+      hazelCont.className = "hazelContainer";
+      hazelCont.id = `hazelCam${i}Cont${x}`;
+      hazelCont.style.backgroundImage = `url("../../resources/ONAI/hazel${x+1}.png")`;
+      spriteList[i].push(hazelCont);
+
+      camScenes[i].appendChild(hazelCont);
+    }
+    }
+
+    this.sprite = spriteList;
+    this.move_to_cam([randint(0, 2), randint(0, 1)]);
+  } else {return "hazel Inactive";}
+}
+
+  roll_hazel() {
+      return (randint(1, this.chance) <= this.ai);
+    }
+
+  hazel_cam_logic() {
+    if (alive) {
+    if (this.check_looking()) {
+      this.timer -= 20; }
+    else { if (!monitor_up) {
+      this.timer += 10; } }
+
+    if (totalTime % 5000 == 0) {
+      this.tryMove(); }
+
+    
+
+
+    if (this.timer <= 0) {
+      this.hazel_attack();
+    }
+  
+    if (this.timer > this.max) {
+      this.timer = this.max;
+    }
+  }
+  }
+
+  hazel_attack() {
+    power = power - this.drain;
+    this.drain += 250;
+    (this.sound).play();
+
+    this.timer = this.max;
+  }
+
+  get attacktimer() {
+    return this.timer;
+  }
 }
 
 function main() {
-  const irisAi = 0;
-  const taylorAi = 0;
-  const leoAi = 0;
-  const picklesAi = 0;
-  const hazelAi = 5;
+  const irisAi = 10;
+  const taylorAi = 10;
+  const leoAi = 10;
+  const picklesAi = 10;
+  const hazelAi = 20;
   const nigelAi = 5;
   const rubyAi = 5;
 
