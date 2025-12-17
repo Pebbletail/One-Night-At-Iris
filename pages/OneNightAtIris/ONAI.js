@@ -378,9 +378,7 @@ class Character {
   }
 
   check_looking() {
-    if (curr_cam == this.char_cam && monitor_up) {
-      return true; }
-    else { return false; }
+    return (curr_cam == this.char_cam && monitor_up);
   }
 
   move_to_cam(loc) {
@@ -823,26 +821,25 @@ class Ruby extends Character {
     this.inCams = false;
     this.maxcooldown = 20000 - (this.ai*500);
     this.cooldownActive = false;
-    this.anger;
+    this.anger = 0;
     this.attack_threshold = 2000 - (this.ai*50);
 
     this.vent_check_interval;
     this.cam_check_interval;
     this.killTimer;
-    this.ventTimer;
+    this.ventTimer = 0;
     
     this.camsprites = this.init_ruby();
     this.ventsprite;
     this.char_cam;
     this.lastPosition = 0;
-    this.deathMSG = "She will sometimes appear on the cameras, quickly switch cams to make her go away. If you look at Ruby for too long or pull the monitor down while she's on the camera she will enter the left vent.";
+    this.deathMSG = `She will sometimes appear on the cameras, quickly switch cams to make her go away. \nIf you look at Ruby for too long or pull the monitor down while she's on the camera she will enter the left vent.`;
   }
 
   tryMove() {
     if (this.active) {
       if (this.check_spawn(this.chance) && this.inCams == false && !(this.cooldownActive)) {
         this.ruby_move_cam();
-        console.log("moved");
         this.inCams = true;
 
         if (p.is_active) {
@@ -866,10 +863,10 @@ class Ruby extends Character {
       camScenes[i].appendChild(rubyCont);
     }
 
-    const rVent = document.getElementById("rightVent");
+    const lVent = document.getElementById("leftVent");
     const ventSp = document.createElement("div");
     ventSp.className = "rubyVentContainer";
-    rVent.appendChild(ventSp);
+    lVent.appendChild(ventSp);
     this.ventsprite = ventSp;
 
     return spriteList;
@@ -880,36 +877,40 @@ class Ruby extends Character {
   ruby_move_cam() {
     this.char_cam = curr_cam;
     (this.camsprites[curr_cam]).style.display = "block";
-    this.cam_check_interval = setInterval(this.ruby_cam_logic.bind(), 20);
-
+    this.cam_check_interval = setInterval(this.ruby_cam_logic.bind(this), 20);
+    this.lastPosition = this.char_cam;
   }
 
   ruby_cam_logic() {
     if (alive) {
     if (this.check_looking()) {
-      console.log("looking at ruby");
-      this.anger += 20; } else{console.log("not Looking");}
+      this.anger += 20; } }
 
-    if (this.anger >= this.attack_threshold) {
-      console.log("ruby attack");
+    if (this.char_cam != curr_cam) {
+      (this.camsprites)[this.lastPosition].style.display = "none";
+      this.clear_ruby(true);
+    }
+
+    if (this.anger >= this.attack_threshold || (curr_cam == this.char_cam && monitor_up == false)) {
       this.anger = 0;
       this.ruby_attack();
     }
-  }
   }
 
 
   ruby_attack() {
     (this.ventsprite).style.display = "block";
+    (this.camsprites)[this.lastPosition].style.display = "none";
 
-    this.killTimer = setTimeout(kill, this.attack_threshold, "Ruby", this.deathMSG);
-    this.vent_check_interval = setInterval(this.check_vent_status.bind(this), 5, ventNum);
+    clearInterval(this.cam_check_interval);
+    this.killTimer = setTimeout(kill, (this.attack_threshold*2)+1, "Ruby", this.deathMSG);
+    this.vent_check_interval = setInterval(this.check_vent_status.bind(this), 5);
 
   }
 
   check_vent_status() {
     if (this.ventTimer >= 100) {
-      clear_ruby(true);
+      this.clear_ruby(true);
     }
 
     if (ClosedLvent) {
@@ -922,8 +923,12 @@ class Ruby extends Character {
     clearInterval(this.vent_check_interval);
     clearInterval(this.cam_check_interval);
     this.ventTimer = 0;
+    this.inCams = false;
+    this.anger = 0;
+    (this.ventsprite).style.display = "none";
 
     if (setCooldown) {
+      this.cooldownActive = true;
       this.cooldownTimer = setTimeout(this.update_cooldown.bind(this), this.maxcooldown);
     }
   }
@@ -1000,7 +1005,7 @@ function main() {
   const picklesAi = 0;
   const hazelAi = 0;
   const nigelAi = 5;
-  const rubyAi = 30;
+  const rubyAi = 20;
 
   const longNights = false;
   const ragebaitMod = false;

@@ -319,11 +319,11 @@ body {
 .rubyVentContainer {
   width: 5vw;
   height: 6.666vw;
-  /*background-image: url("../../resources/ONAI/rubyVent.png");
+  bottom: 0px;
+  background-image: url("../../resources/ONAI/rubyVent.png");
 
   background-repeat: no-repeat;
-  background-size: contain;*/
-  background-color: azure;
-  position: fixed;
+  background-size: contain;
+  position: relative;
   display: none;
 }
