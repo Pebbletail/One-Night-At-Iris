@@ -1,0 +1,28 @@
+body, #masterContainer {
+  display: flex;
+  flex-direction: column;
+  background-color: #001011;
+}
+
+#masterContainer {
+  justify-content: center;
+  align-items: center;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.charContainer {
+  border: yellow solid 1px;
+  width: 10vw;
+  height: 20vh;
+}
+
+.charContainer img {
+  width: 10vw;
+  height: 20vh;
+  object-fit: contain;
+}

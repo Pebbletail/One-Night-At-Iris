@@ -8,6 +8,7 @@ let hour = 0;
 let camTime = 0;
 let officeTime = 0;
 let totalTime = 0;
+let realTime = 0;
 
 let ClosedLvent = false;
 let ClosedRvent = false;
@@ -162,6 +163,7 @@ function pull_up_monitor() {
     cams[i].style.display = "block"; }
 
   p.tryMove();
+  r.tryMove();
 }
 
 function pull_down_monitor() {
@@ -308,6 +310,7 @@ function display_hour() {
   display.textContent = "12AM";
   display.id = "hourDisplay";
   body.appendChild(display);
+  display_real_timer();
 }
 
 function increase_hour() {
@@ -319,8 +322,28 @@ function increase_hour() {
   t.tryAttack();
 }
 
+function display_real_timer() {
+  display = document.createElement("p");
+  display.id = "rTimeDisplay";
+  body.appendChild(display);
+}
+
+function update_real_timer(longMod) {
+  let deci = Math.floor(totalTime/100) % 10;
+  let sec = Math.floor(totalTime / 1000) % 60;
+  let min = Math.floor(totalTime / 60000);
+
+  const rTimer = document.getElementById("rTimeDisplay");
+  if (sec < 10) {
+    rTimer.textContent = `${min}:0${sec}.${deci}`; }
+  else {
+  rTimer.textContent = `${min}:${sec}.${deci}`; }
+}
+
 function update_timers(longMod) {
+  if (alive) {
   totalTime += 10;
+  update_real_timer(longMod);
   if (monitor_up) {
     camTime += 10;
   }
@@ -330,12 +353,11 @@ function update_timers(longMod) {
 
   if (longMod) {
     if (totalTime % 60000 == 0) {
-      increase_hour();
-    }
+      increase_hour(); }
   }
   else {
     if (totalTime % 45000 == 0) {
-      increase_hour();
+      increase_hour(); }
     }
   }
 }
@@ -392,13 +414,13 @@ class Character {
     this.lastPosition = loc;
   }
 
-  get_movement_pos() {
+  get_movement_pos(disableFlipSpawn) {
     let move = [];
     for (let i=2; i>0; i--) {
       move.push(randint(0, i));
     }
 
-    if (move[0] == this.lastPosition[0]) {
+    if (move[0] == this.lastPosition[0] || (move[0] == curr_cam && disableFlipSpawn)) {
       move[0] = (move[0] + randint(1, 2)) % 3;
     }
 
@@ -635,7 +657,7 @@ class Pickles extends Character {
   constructor(ai) {
     super(ai);
     this.active = this.active;
-    this.chance = this.ai+13;
+    this.chance = this.ai+12;
     this.sprites;
     this.sound;
     this.char_cam = randint(0, 2);
@@ -648,7 +670,7 @@ class Pickles extends Character {
   tryMove() {
     if (this.active) {
       if (this.roll_pickles()) {
-        let loc = this.get_movement_pos();
+        let loc = this.get_movement_pos(true);
         this.move_to_cam(loc);
 
         }
@@ -690,7 +712,7 @@ class Pickles extends Character {
     else {
       this.timer -= 20; }
 
-    if (monitor_up && (totalTime % 4500 == 0)) {
+    if (monitor_up && (totalTime % 4000 == 0)) {
       this.tryMove()}
 
 
@@ -728,7 +750,7 @@ class Hazel extends Character {
     this.sound;
     this.char_cam = randint(0, 2);
     this.lastPosition = [0, 0];
-    this.max = (29-this.ai)*1000
+    this.max = (29-this.ai)*500;
     this.timer = (29-this.ai)*500;
     this.drain = Math.ceil(this.ai/4)*100;
     this.deathMSG = "She will move around the cameras, looking at her for too long will cause her to drain your power.";
@@ -737,13 +759,13 @@ class Hazel extends Character {
   tryMove() {
     if (this.active) {
       if (this.roll_hazel()) {
-        let loc = this.get_movement_pos();
+        let loc = this.get_movement_pos(false);
         this.move_to_cam(loc);
 
         if (p.is_active) {
           if (this.char_cam == p.get_cam) {
-            if (randint(1, 5) < 3) {
-              let loc = this.get_movement_pos();
+            if (randint(1, 5) == 5) {
+              let loc = this.get_movement_pos(false);
               this.move_to_cam(loc); }}}
       }
     }
@@ -751,6 +773,7 @@ class Hazel extends Character {
 
   init_hazel() {
     if (this.active) {
+
     this.sound = document.createElement("AUDIO");
     (this.sound).src = "../../resources/ONAI/PowerSpark.mp3";
     setInterval(this.hazel_cam_logic.bind(this), 20);
@@ -819,7 +842,7 @@ class Ruby extends Character {
     this.chance = 25;
 
     this.inCams = false;
-    this.maxcooldown = 20000 - (this.ai*500);
+    this.maxcooldown = randint(15000, 16000) - (this.ai*500);
     this.cooldownActive = false;
     this.anger = 0;
     this.attack_threshold = 2000 - (this.ai*50);
@@ -842,10 +865,10 @@ class Ruby extends Character {
         this.ruby_move_cam();
         this.inCams = true;
 
-        if (p.is_active) {
+       /* if (p.is_active) {
           if (this.char_cam == p.get_cam) {
             if (randint(1, 5) < 3) {
-              this.clear_ruby(false); }}}
+              this.clear_ruby(false); }}} */
       }
     }
   }
@@ -868,6 +891,9 @@ class Ruby extends Character {
     ventSp.className = "rubyVentContainer";
     lVent.appendChild(ventSp);
     this.ventsprite = ventSp;
+
+    this.cooldownActive = true;
+    this.cooldownTimer = setTimeout(this.update_cooldown.bind(this), randint(3500, this.maxcooldown));
 
     return spriteList;
 
@@ -927,10 +953,8 @@ class Ruby extends Character {
     this.anger = 0;
     (this.ventsprite).style.display = "none";
 
-    if (setCooldown) {
-      this.cooldownActive = true;
-      this.cooldownTimer = setTimeout(this.update_cooldown.bind(this), this.maxcooldown);
-    }
+    this.cooldownActive = true;
+    this.cooldownTimer = setTimeout(this.update_cooldown.bind(this), this.maxcooldown);
   }
 
   update_cooldown() {
@@ -1000,10 +1024,10 @@ class Ruby extends Character {
 
 function main() {
   const irisAi = 0;
-  const taylorAi = 0;
-  const leoAi = 0;
-  const picklesAi = 0;
-  const hazelAi = 0;
+  const taylorAi = 20;
+  const leoAi = 10;
+  const picklesAi = 5;
+  const hazelAi = 20;
   const nigelAi = 5;
   const rubyAi = 20;
 
