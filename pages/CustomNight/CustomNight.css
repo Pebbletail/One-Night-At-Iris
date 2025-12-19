@@ -1,10 +1,10 @@
-body, #masterContainer {
+body, #panelContainer {
   display: flex;
   flex-direction: column;
   background-color: #001011;
 }
 
-#masterContainer {
+#panelContainer {
   justify-content: center;
   align-items: center;
 }
@@ -25,4 +25,31 @@ body, #masterContainer {
   width: 10vw;
   height: 20vh;
   object-fit: contain;
+}
+
+.charContainer h3 {
+  color: white;
+  size: xx-large;
+  position: relative;
+  bottom: 8vh;
+}
+
+.aiSelectors {
+  flex-direction: column;
+  justify-content: space-between;
+  width: 2.5vw;
+  height: 7.5vh;
+  border: navajowhite dotted 1px;
+  position: relative;
+  bottom: 13.8vh;
+  left: 7.3vw;
+
+  display: none;
+}
+
+.aiArrow {
+  width: 2.5vw;
+  height: 3.5vh;
+  background-repeat: no-repeat;
+  background-size: contain;
 }
