@@ -49,7 +49,16 @@ function updateAI(dir, char) {
   let currNum = Number(display.textContent);
   let newNum = String(currNum + (dir));
   if (newNum > -1 && newNum < 21){
-    display.textContent = String(newNum); }
+    display.textContent = String(newNum);
+    sessionStorage.setItem(`${char}AI`, String(newNum));
+}
+
+function setAll20() {
+  const nums = document.getElementsByClassName("counters");
+  for (let i=0; i<nums.length; i++) {
+    nums[i].textContent = "20";
+    const char = document.getElementById((nums[i].id).substring(0, indexOf("N")));
+    sessionStorage.setItem(`${char}AI`, "20");
 }
 
 function main() {
