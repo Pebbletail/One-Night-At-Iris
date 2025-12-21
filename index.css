@@ -30,3 +30,12 @@ body {
 .title {
   color: #8D0801;
 }
+
+#secret {
+  width: 1vw;
+  height: 2vh;
+
+  position: relative;
+  left: 43.5vw;
+  top: -17.5vh;
+}

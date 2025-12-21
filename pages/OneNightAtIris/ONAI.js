@@ -501,7 +501,6 @@ class Iris extends Character {
     if (this.check_spawn(this.chance) && this.atOffice == false) {
       this.atOffice = true;
       const ventNum = this.spawn_iris();
-      (this.sound).play();
 
       this.killTimer = setTimeout(kill, ((2.15-0.05*this.ai)*1000), "Iris", this.deathMSG);
 
@@ -539,6 +538,7 @@ class Iris extends Character {
 
   spawn_iris() {
     const pos = randint(0, 1);
+    (this.sound).play();
     (this.sprite.at(pos)).style.display = "block";
     return pos;
     }
@@ -967,7 +967,7 @@ class Ruby extends Character {
 }
 
 
-/* class Nigel extends Character {
+/* class Nigel extends Character { -- DEVELOPMENT PAUSED UNTIL I CAN THINK OF A GOOD MECHANIC --
   constructor(ai) {
     super(ai);
     this.active = this.active;
@@ -1022,21 +1022,24 @@ class Ruby extends Character {
   }
 } */
 
+function init_ai() {
+  const irisAi = Number(sessionStorage.getItem("irisAI"));
+  console.log(sessionStorage.getItem("irisAI"));
+  const taylorAi = Number(sessionStorage.getItem("taylorAI"));
+  const leoAi = Number(sessionStorage.getItem("leoAI"));
+  const picklesAi = Number(sessionStorage.getItem("picklesAI"));
+  const hazelAi = Number(sessionStorage.getItem("hazelAI"));
+  const nigelAi = Number(sessionStorage.getItem("nigelAI"));
+  const rubyAi = Number(sessionStorage.getItem("rubyAI"));
+
+  return [[irisAi, false], [taylorAi, false], leoAi, picklesAi, hazelAi, nigelAi, rubyAi];
+}
+
 function main() {
-  const irisAi = 0;
-  const taylorAi = 20;
-  const leoAi = 10;
-  const picklesAi = 5;
-  const hazelAi = 20;
-  const nigelAi = 5;
-  const rubyAi = 20;
+ const chars = init_ai();
 
   const longNights = false;
-  const ragebaitMod = false;
-  const LimboMod = false;
-  const debug = true;
-
-  const chars = [[irisAi, ragebaitMod], [taylorAi, LimboMod], leoAi, picklesAi, hazelAi, nigelAi, rubyAi];
+  const debug = Boolean(sessionStorage.getItem("debugActive"));
 
   initialize_night(chars, longNights, debug);
 }
