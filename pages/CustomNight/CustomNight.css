@@ -4,6 +4,11 @@ body, #panelContainer {
   background-color: #001011;
 }
 
+body {
+  justify-content: center;
+  align-items: center;
+}
+
 #panelContainer {
   justify-content: center;
   align-items: center;
@@ -55,8 +60,48 @@ body, #panelContainer {
 }
 
 .setters {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 20vw;
   height: 7vh;
   border: red dotted 2px;
   color: white;
 }
+
+#ModiferMainContainer {
+  width: 90vw;
+  height: 10vh;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  position: relative;
+
+  bottom: -20vh;
+
+  border: white dotted 1px;
+}
+
+.modifierIndContainer {
+  display: flex;
+  flex-direction: row;
+  padding: 1vw;
+}
+
+.modifierIndContainer h3{
+  color: white;
+  border: red solid 1px;
+  height: 4vh;
+
+  position: relative;
+  bottom: 2vh;
+}
+
+.checkBox {
+  border: white solid 1px;
+  width: 2.5vw;
+  height: 2.5vw;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+

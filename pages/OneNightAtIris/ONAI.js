@@ -319,6 +319,10 @@ function increase_hour() {
   const toDisplay = String(hour);
   display.textContent = `${toDisplay}AM`;
 
+  if (hour == 6) {
+    kill("You Survived");
+  }
+
   t.tryAttack();
 }
 
@@ -1024,7 +1028,6 @@ class Ruby extends Character {
 
 function init_ai() {
   const irisAi = Number(sessionStorage.getItem("irisAI"));
-  console.log(sessionStorage.getItem("irisAI"));
   const taylorAi = Number(sessionStorage.getItem("taylorAI"));
   const leoAi = Number(sessionStorage.getItem("leoAI"));
   const picklesAi = Number(sessionStorage.getItem("picklesAI"));
@@ -1038,7 +1041,7 @@ function init_ai() {
 function main() {
  const chars = init_ai();
 
-  const longNights = false;
+  const longNights = Boolean(Number(sessionStorage.getItem("longNights")));
   const debug = Boolean(sessionStorage.getItem("debugActive"));
 
   initialize_night(chars, longNights, debug);

@@ -82,9 +82,32 @@ function setAll0() {
     sessionStorage.setItem("nigelAI", "0");
 }
 
+function check_box(ele, toggle) {
+  if (Boolean(Number(toggle))) {
+    ele.style.backgroundImage = "url('../../resources/CustomNight/check.png')";
+  } else {
+    ele.style.backgroundImage = "none";
+  }
+
+}
+
+function toggleLongNights() {
+  let opt = Number(sessionStorage.getItem("longNights"));
+  opt = (Boolean(opt));
+  opt = !opt;
+
+  sessionStorage.setItem("longNights", Number(opt));
+
+
+
+  check_box(document.getElementById("longNightCheck"), opt);
+}
+
 function main() {
   init_selectors();
   setAll0();
+
+  check_box(document.getElementById("longNightCheck"), sessionStorage.getItem("longNights"));
 }
 
 main();

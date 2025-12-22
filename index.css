@@ -1,4 +1,6 @@
 body {
+  display: flex;
+  flex-direction: column;
   background-color: #001011;
 }
 
@@ -13,18 +15,19 @@ body {
   border-bottom: #727072 solid 2px;
 }
 
-#gameButton {
-  height: 10vh;
-  width: 10vh;
-  border-radius: 50%;
+.gameButton {
+  margin: 2vw;
+  display: flex;
 
+  border: darkred solid 2px;
+  background-color: #600000;
+  height: 10vh;
+  width: 40vw;
   margin-left: 20%;
 }
 
-#gameButton img {
-  height: 10vh;
-  width: 10vh;
-  object-fit: contain;
+.gameButton * {
+  size: xx-large;
 }
 
 .title {
@@ -33,9 +36,9 @@ body {
 
 #secret {
   width: 1vw;
-  height: 2vh;
+  height: 1vw;
 
   position: relative;
-  left: 43.5vw;
-  top: -17.5vh;
+  left: 42vw;
+  bottom: 39vh;
 }
